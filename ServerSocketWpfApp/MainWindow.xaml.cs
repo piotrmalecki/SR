@@ -6,6 +6,7 @@
 
 using System;
 using System.Text;
+using System.Linq;
 using System.Windows;
 using System.Net; 
 using System.Net.Sockets;
@@ -13,6 +14,9 @@ using System.Windows.Controls;
 using System.Threading;
 using System.Windows.Threading;
 using Newtonsoft.Json.Linq;
+using WpfApplication1.Comminication;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace ServerSocketWpfApp
 {
@@ -20,9 +24,11 @@ namespace ServerSocketWpfApp
     {
 
         SocketPermission permission;
-        Socket sListener;
-        IPEndPoint ipEndPoint;
+        public List<Socket> sListener = new List<Socket>();
+        public List<IPEndPoint> ipEndPoint = new List<IPEndPoint>();
         Socket handler;
+        public List<Client> clientList = new List<Client>();
+        public List<int> portstClient = new List<int>();
 
         private TextBox tbAux = new TextBox();
 
@@ -58,9 +64,6 @@ namespace ServerSocketWpfApp
                 SocketPermission.AllPorts // Specifies all ports 
                 );
 
-                // Listening Socket object 
-                sListener = null;
-
                 // Ensures the code to have permission to access a Socket 
                 permission.Demand();
 
@@ -71,17 +74,22 @@ namespace ServerSocketWpfApp
                 IPAddress ipAddr = ipHost.AddressList[0];
 
                 // Creates a network endpoint 
-                ipEndPoint = new IPEndPoint(ipAddr, 4510);
-
-                // Create one Socket object to listen the incoming connection 
-                sListener = new Socket(
-                    ipAddr.AddressFamily,
-                    SocketType.Stream,
-                    ProtocolType.Tcp
-                    );
-
+                foreach (var item in portstClient)
+                {
+                    var listener = new Socket(
+                        ipAddr.AddressFamily,
+                        SocketType.Stream,
+                        ProtocolType.Tcp
+                        );
+                    var portip = new IPEndPoint(ipAddr, item);
+                    
+                    ipEndPoint.Add(portip);
+                    sListener.Add(listener);
+                    listener.Bind(portip);
+                }
                 // Associates a Socket with a local endpoint 
-                sListener.Bind(ipEndPoint);
+             
+                
 
                 tbStatus.Text = "Server started.";
 
@@ -97,13 +105,13 @@ namespace ServerSocketWpfApp
             {
                 // Places a Socket in a listening state and specifies the maximum 
                 // Length of the pending connections queue 
-                sListener.Listen(10);
+                
+                sListener.ForEach(i => i.Listen(10));
 
                 // Begins an asynchronous operation to accept an attempt 
                 AsyncCallback aCallback = new AsyncCallback(AcceptCallback);
-                sListener.BeginAccept(aCallback, sListener);
-
-                tbStatus.Text = "Server is now listening on " + ipEndPoint.Address + " port: " + ipEndPoint.Port;
+                
+                sListener.ForEach(i=>i.BeginAccept(aCallback, i));
 
                 StartListen_Button.IsEnabled = false;
                 Send_Button.IsEnabled = true;
@@ -153,6 +161,7 @@ namespace ServerSocketWpfApp
 
         public void ReceiveCallback(IAsyncResult ar)
         {
+            JObject json = null;
             try
             {
                 // Fetch a user-defined object that contains information 
@@ -180,7 +189,7 @@ namespace ServerSocketWpfApp
                     // If message contains "<Client Quit>", finish receiving
                     try
                     {
-                        var json = JObject.Parse(content);
+                         json = JObject.Parse(content);
 
                         this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
                         {
@@ -198,8 +207,8 @@ namespace ServerSocketWpfApp
                             SocketFlags.None,
                             new AsyncCallback(ReceiveCallback), obj);
                     }
-                   
 
+                    Logic(json, content);
                     this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
                     {
                         tbAux.Text = content;
@@ -210,12 +219,33 @@ namespace ServerSocketWpfApp
             catch (Exception exc) { MessageBox.Show(exc.ToString()); }
         }
 
+        private void Logic(JObject json, string content)
+        {
+            switch ((string)json["type"])
+            {
+                case "connect":
+                    ClientConnect deserializedClient = JsonConvert.DeserializeObject<ClientConnect>(content);
+                    foreach (var item in deserializedClient.list)
+                    {
+                        clientList.Add(item);
+                    }
+                    
+                    ClientConnect clientConnect = new ClientConnect("clients-list", clientList);
+
+                    string result = JsonConvert.SerializeObject(clientConnect);
+                    byte[] msg = Encoding.Unicode.GetBytes(result);
+                    int bytesSend = handler.Send(msg);
+                    break;
+
+            }
+        }
+
         private void Send_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 // Convert byte array to string 
-                string str = tbMsgToSend.Text;
+                string str = null;/// = tbMsgToSend.Text;
 
                 // Prepare the reply message 
                 byte[] byteData =
@@ -250,10 +280,10 @@ namespace ServerSocketWpfApp
         {
             try
             {
-                if (sListener.Connected)
+                if (sListener.Any(i=>i.Connected))
                 {
-                    sListener.Shutdown(SocketShutdown.Receive);
-                    sListener.Close();
+                    sListener.ForEach(i=>i.Shutdown(SocketShutdown.Receive));
+                    sListener.ForEach(i=>i.Close());
                 }
 
                 Close_Button.IsEnabled = false;

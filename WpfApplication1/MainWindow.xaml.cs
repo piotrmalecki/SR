@@ -10,8 +10,10 @@ using System.Windows;
 using System.Net.Sockets;
 using System.Net;
 using Newtonsoft.Json;
+using System.Linq;
 using WpfApplication1.Comminication;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 namespace WpfApplication1
 {
@@ -21,9 +23,12 @@ namespace WpfApplication1
         // Receiving byte array  
         byte[] bytes = new byte[1024]; 
         Socket senderSock;
+        public int port = 4511;
+        public String name = "Ala";
 
         public MainWindow()
         {
+            
             InitializeComponent();
 
             Send_Button.IsEnabled = false;
@@ -35,7 +40,7 @@ namespace WpfApplication1
             try
             {
 
-                Client client = new Client(Guid.NewGuid().ToString(), "Marek");
+                Client client = new Client(Guid.NewGuid().ToString(), name);
                 ClientConnect clientConnect = new ClientConnect("connect", new List<Client>() { client });
                 // Create one SocketPermission for socket access restrictions 
                 SocketPermission permission = new SocketPermission(
@@ -55,7 +60,7 @@ namespace WpfApplication1
                 IPAddress ipAddr = ipHost.AddressList[0];
 
                 // Creates a network endpoint 
-                IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, 4510);
+                IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, port);
 
                 // Create one Socket object to setup Tcp connection 
                 senderSock = new Socket(
@@ -73,6 +78,7 @@ namespace WpfApplication1
                 string connect = JsonConvert.SerializeObject(clientConnect);
                 byte[] msg = Encoding.Unicode.GetBytes(connect);
                 int bytesSend = senderSock.Send(msg);
+                ReceiveDataFromServer();
 
                 Connect_Button.IsEnabled = false;
                 Send_Button.IsEnabled = true;
@@ -117,7 +123,21 @@ namespace WpfApplication1
                     bytesRec = senderSock.Receive(bytes);
                     theMessageToReceive += Encoding.Unicode.GetString(bytes, 0, bytesRec);
                 }
+                var json = JObject.Parse(theMessageToReceive);
+                switch ((string)json["type"])
+                {
+                    case "clients-list":
+                        ClientConnect deserializedClient = JsonConvert.DeserializeObject<ClientConnect>(theMessageToReceive);
+                        //clientList.Add(deserializedClient);
+                        foreach (var item in deserializedClient.list)
+                        {
+                            ClintsListBox.Items.Add(item.name);
+                            
+                        }
+                        
+                        break;
 
+                }
                 tbReceivedMsg.Text = "The server reply: " + theMessageToReceive;
             }
             catch (Exception exc) { MessageBox.Show(exc.ToString()); }
@@ -136,6 +156,18 @@ namespace WpfApplication1
                 Disconnect_Button.IsEnabled = false;
             }
             catch (Exception exc) { MessageBox.Show(exc.ToString()); }
+        }
+
+        private void ListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+
+        }
+
+        private void Update_Click(object sender, RoutedEventArgs e)
+        {
+            //string connect = JsonConvert.SerializeObject(clientConnect);
+            //byte[] msg = Encoding.Unicode.GetBytes(connect);
+            //int bytesSend = senderSock.Send(msg);
         } 
     }
 }
