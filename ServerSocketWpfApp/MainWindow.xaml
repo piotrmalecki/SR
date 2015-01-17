@@ -8,7 +8,6 @@
         <TextBlock x:Name="tbStatus" HorizontalAlignment="Left" Margin="185,37,0,0" TextWrapping="Wrap" Text="Not connected yet !" VerticalAlignment="Top" Width="163" Height="55"/>
         <Button Name="Send_Button" Content="Clear" HorizontalAlignment="Left" Margin="60,429,0,0" VerticalAlignment="Top" Width="120" Click="Send_Click" Background="Black" Foreground="White"/>
         <Button Name="Close_Button" Content="Close connection" HorizontalAlignment="Left" Margin="60,475,0,0" VerticalAlignment="Top" Width="120" Click="Close_Click" Background="Black" Foreground="White"/>
-        <Button Name="StartListen_Button" Content="Start listening" HorizontalAlignment="Left" Margin="60,59,0,0" VerticalAlignment="Top" Width="120" Click="Listen_Click" Background="Black" Foreground="White"/>
         <TextBlock HorizontalAlignment="Left" Margin="60,101,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="176" Height="16"><Run Text="Log"/><LineBreak/><Run/></TextBlock>
 
     </Grid>

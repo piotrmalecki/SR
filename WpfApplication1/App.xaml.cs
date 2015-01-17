@@ -17,6 +17,12 @@ namespace WpfApplication1
         void App_Startup(object sender, StartupEventArgs e)
         {
             MainWindow mainWindow = new MainWindow();
+            MainWindow mainWindow2 = new MainWindow();
+
+            mainWindow2.name = "Ada";
+            mainWindow.name = "Jozef";
+            mainWindow2.port = 4511;
+            mainWindow.port = 4511;
             // Application is running
             // Process command line args
             for (int i = 0; i != e.Args.Length; ++i)
@@ -32,6 +38,7 @@ namespace WpfApplication1
 
             // Create main application window, starting minimized if specified
             mainWindow.Show();
+            mainWindow2.Show();
         }
     }
 }

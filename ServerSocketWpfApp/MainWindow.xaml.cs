@@ -8,7 +8,7 @@ using System;
 using System.Text;
 using System.Linq;
 using System.Windows;
-using System.Net; 
+using System.Net;
 using System.Net.Sockets;
 using System.Windows.Controls;
 using System.Threading;
@@ -17,18 +17,39 @@ using Newtonsoft.Json.Linq;
 using WpfApplication1.Comminication;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using ServerSocketWpfApp.Comminication;
 
 namespace ServerSocketWpfApp
 {
+
+    public class StateObject
+    {
+        // Client  socket.
+        public Socket workSocket = null;
+        // Size of receive buffer.
+        public const int BufferSize = 1024;
+        // Receive buffer.
+        public byte[] buffer = new byte[BufferSize];
+        // Received data string.
+        public StringBuilder sb = new StringBuilder();
+    }
+
     public partial class MainWindow : Window
     {
-
-        SocketPermission permission;
-        public List<Socket> sListener = new List<Socket>();
-        public List<IPEndPoint> ipEndPoint = new List<IPEndPoint>();
+        
+        const int MAX_CLIENTS = 10;
+        public List<ClientWorker> clientsConnected = new List<ClientWorker>();
+        public AsyncCallback pfnWorkerCallBack;
+        public int port = 4511;
+        private Socket m_mainSocket;
+        private Socket[] m_workerSocket = new Socket[10];
+        private int m_clientCount = 0;
+        //public List<Socket> sListener = new List<Socket>();
+        //public List<IPEndPoint> ipEndPoint = new List<IPEndPoint>();
         Socket handler;
         public List<Client> clientList = new List<Client>();
         public List<int> portstClient = new List<int>();
+        public String result = null;
 
         private TextBox tbAux = new TextBox();
 
@@ -38,7 +59,6 @@ namespace ServerSocketWpfApp
             tbAux.SelectionChanged += tbAux_SelectionChanged;
 
             Start_Button.IsEnabled = true;
-            StartListen_Button.IsEnabled = false;
             Send_Button.IsEnabled = false;
             Close_Button.IsEnabled = false;
         }
@@ -56,187 +76,205 @@ namespace ServerSocketWpfApp
         {
             try
             {
-                // Creates one SocketPermission object for access restrictions
-                permission = new SocketPermission(
-                NetworkAccess.Accept,     // Allowed to accept connections 
-                TransportType.Tcp,        // Defines transport types 
-                "",                       // The IP addresses of local host 
-                SocketPermission.AllPorts // Specifies all ports 
-                );
-
-                // Ensures the code to have permission to access a Socket 
-                permission.Demand();
-
                 // Resolves a host name to an IPHostEntry instance 
                 IPHostEntry ipHost = Dns.GetHostEntry("");
 
                 // Gets first IP address associated with a localhost 
-                IPAddress ipAddr = ipHost.AddressList[0];
+                IPAddress ipAddr = Dns.Resolve("localhost").AddressList[0];
 
                 // Creates a network endpoint 
-                foreach (var item in portstClient)
-                {
-                    var listener = new Socket(
-                        ipAddr.AddressFamily,
-                        SocketType.Stream,
-                        ProtocolType.Tcp
-                        );
-                    var portip = new IPEndPoint(ipAddr, item);
-                    
-                    ipEndPoint.Add(portip);
-                    sListener.Add(listener);
-                    listener.Bind(portip);
-                }
+
+                m_mainSocket = new Socket(
+                       ipAddr.AddressFamily,
+                       SocketType.Stream,
+                       ProtocolType.Tcp
+                       );
+                var portip = new IPEndPoint(ipAddr, port);
+
+
+                // ipEndPoint.Add(portip);
+                // sListener.Add(m_mainSocket);
+                m_mainSocket.Bind(portip);
+                m_mainSocket.Listen(15);
+                m_mainSocket.BeginAccept(new AsyncCallback(OnClientConnect), null);
                 // Associates a Socket with a local endpoint 
-             
-                
+
+
 
                 tbStatus.Text = "Server started.";
 
                 Start_Button.IsEnabled = false;
-                StartListen_Button.IsEnabled = true;
+
             }
             catch (Exception exc) { MessageBox.Show(exc.ToString()); }
         }
 
-        private void Listen_Click(object sender, RoutedEventArgs e)
+        public void OnClientConnect(IAsyncResult asyn)
         {
             try
             {
-                // Places a Socket in a listening state and specifies the maximum 
-                // Length of the pending connections queue 
-                
-                sListener.ForEach(i => i.Listen(10));
+                // Here we complete/end the BeginAccept() asynchronous call
+                // by calling EndAccept() - which returns the reference to
+                // a new Socket object
+                m_workerSocket[m_clientCount] = m_mainSocket.EndAccept(asyn);
+                // Let the worker Socket do the further processing for the 
+                // just connected client
+                WaitForData(m_workerSocket[m_clientCount]);
+                // Now increment the client count
+                ++m_clientCount;
+                // Display this client connection as a status message on the GUI	
+                String str = String.Format("Client # {0} connected", m_clientCount);
+                //textBoxMsg.Text = str;
 
-                // Begins an asynchronous operation to accept an attempt 
-                AsyncCallback aCallback = new AsyncCallback(AcceptCallback);
-                
-                sListener.ForEach(i=>i.BeginAccept(aCallback, i));
-
-                StartListen_Button.IsEnabled = false;
-                Send_Button.IsEnabled = true;
+                // Since the main Socket is now free, it can go back and wait for
+                // other clients who are attempting to connect
+                m_mainSocket.BeginAccept(new AsyncCallback(OnClientConnect), null);
             }
-            catch (Exception exc) { MessageBox.Show(exc.ToString()); }
+            catch (ObjectDisposedException)
+            {
+                System.Diagnostics.Debugger.Log(0, "1", "\n OnClientConnection: Socket has been closed\n");
+            }
+            catch (SocketException se)
+            {
+                MessageBox.Show(se.Message);
+            }
+
         }
 
-        public void AcceptCallback(IAsyncResult ar)
+        public class SocketPacket
         {
-            Socket listener = null;
-
-            // A new Socket to handle remote host communication 
-            Socket handler = null;
+            public System.Net.Sockets.Socket m_currentSocket;
+            public byte[] dataBuffer = new byte[2048];
+        }
+        // Start waiting for data from the client
+        public void WaitForData(System.Net.Sockets.Socket soc)
+        {
             try
             {
-                // Receiving byte array 
-                byte[] buffer = new byte[1024];
-                // Get Listening Socket object 
-                listener = (Socket)ar.AsyncState;
-                // Create a new socket 
-                handler = listener.EndAccept(ar);
-
-                // Using the Nagle algorithm 
-                handler.NoDelay = false;
-
-                // Creates one object array for passing data 
-                object[] obj = new object[2];
-                obj[0] = buffer;
-                obj[1] = handler;
-
-                // Begins to asynchronously receive data 
-                handler.BeginReceive(
-                    buffer,        // An array of type Byt for received data 
-                    0,             // The zero-based position in the buffer  
-                    buffer.Length, // The number of bytes to receive 
-                    SocketFlags.None,// Specifies send and receive behaviors 
-                    new AsyncCallback(ReceiveCallback),//An AsyncCallback delegate 
-                    obj            // Specifies infomation for receive operation 
-                    );
-
-                // Begins an asynchronous operation to accept an attempt 
-                AsyncCallback aCallback = new AsyncCallback(AcceptCallback);
-                listener.BeginAccept(aCallback, listener);
+                if (pfnWorkerCallBack == null)
+                {
+                    // Specify the call back function which is to be 
+                    // invoked when there is any write activity by the 
+                    // connected client
+                    pfnWorkerCallBack = new AsyncCallback(OnDataReceived);
+                }
+                SocketPacket theSocPkt = new SocketPacket();
+                theSocPkt.m_currentSocket = soc;
+                // Start receiving any data written by the connected client
+                // asynchronously
+                soc.BeginReceive(theSocPkt.dataBuffer, 0,
+                                   theSocPkt.dataBuffer.Length,
+                                   SocketFlags.None,
+                                   pfnWorkerCallBack,
+                                   theSocPkt);
             }
-            catch (Exception exc) { MessageBox.Show(exc.ToString()); }
+            catch (SocketException se)
+            {
+                MessageBox.Show(se.Message);
+            }
+
+        }
+        // This the call back function which will be invoked when the socket
+        // detects any client writing of data on the stream
+        public void OnDataReceived(IAsyncResult asyn)
+        {
+            try
+            {
+                SocketPacket socketData = (SocketPacket)asyn.AsyncState;
+
+                int iRx = 0;
+                // Complete the BeginReceive() asynchronous call by EndReceive() method
+                // which will return the number of characters written to the stream 
+                // by the client
+                iRx = socketData.m_currentSocket.EndReceive(asyn);
+                char[] chars = new char[iRx + 1];
+                System.Text.Decoder d = System.Text.Encoding.UTF8.GetDecoder();
+                int charLen = d.GetChars(socketData.dataBuffer,
+                                         0, iRx, chars, 0);
+                System.String szData = new System.String(chars);
+                //richTextBoxReceivedMsg.AppendText(szData);
+
+                Logic(socketData.m_currentSocket, szData);
+                // Continue the waiting for data on the Socket
+                WaitForData(socketData.m_currentSocket);
+            }
+            catch (ObjectDisposedException)
+            {
+                System.Diagnostics.Debugger.Log(0, "1", "\nOnDataReceived: Socket has been closed\n");
+            }
+            catch (SocketException se)
+            {
+                MessageBox.Show(se.Message);
+            }
         }
 
-        public void ReceiveCallback(IAsyncResult ar)
+
+        private void Logic(Socket handler, string content)
         {
+            ClientConnect clientConnect = null;
+            string sendText = null;
+            byte[] msg = null;
+            int bytesSend = 0;
             JObject json = null;
             try
             {
-                // Fetch a user-defined object that contains information 
-                object[] obj = new object[2];
-                obj = (object[])ar.AsyncState;
-
-                // Received byte array 
-                byte[] buffer = (byte[])obj[0];
-
-                // A Socket to handle remote host communication. 
-                handler = (Socket)obj[1];
-
-                // Received message 
-                string content = string.Empty;
-
-
-                // The number of bytes received. 
-                int bytesRead = handler.EndReceive(ar);
-
-                if (bytesRead > 0)
-                {
-                    content += Encoding.Unicode.GetString(buffer, 0,
-                        bytesRead);
-
-                    // If message contains "<Client Quit>", finish receiving
-                    try
-                    {
-                         json = JObject.Parse(content);
-
-                        this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
-                        {
-                            tbAux.Text = "Read " + json["type"];
-                        }
-                       );
-                    }
-                    catch
-                    {
-                        // Continues to asynchronously receive data
-                        byte[] buffernew = new byte[1024];
-                        obj[0] = buffernew;
-                        obj[1] = handler;
-                        handler.BeginReceive(buffernew, 0, buffernew.Length,
-                            SocketFlags.None,
-                            new AsyncCallback(ReceiveCallback), obj);
-                    }
-
-                    Logic(json, content);
-                    this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
-                    {
-                        tbAux.Text = content;
-                    }
-                    );
-                }
+                result += content;
+                json = JObject.Parse(result);
             }
-            catch (Exception exc) { MessageBox.Show(exc.ToString()); }
-        }
+            catch (Exception)
+            {
+                return;
+            }
 
-        private void Logic(JObject json, string content)
-        {
             switch ((string)json["type"])
             {
+
                 case "connect":
-                    ClientConnect deserializedClient = JsonConvert.DeserializeObject<ClientConnect>(content);
-                    foreach (var item in deserializedClient.list)
                     {
-                        clientList.Add(item);
+                        ClientConnect deserializedClient = JsonConvert.DeserializeObject<ClientConnect>(result);
+                        foreach (var item in deserializedClient.list)
+                        {
+                            clientList.Add(item);
+                            clientsConnected.Add(new ClientWorker(item.id, handler));
+                        }
+
+                        clientConnect = new ClientConnect("clients-list", clientList);
+
+                        sendText = JsonConvert.SerializeObject(clientConnect);
+                        msg = Encoding.ASCII.GetBytes(sendText);
+                        bytesSend = handler.Send(msg);
+                        result = null;
                     }
-                    
-                    ClientConnect clientConnect = new ClientConnect("clients-list", clientList);
-
-                    string result = JsonConvert.SerializeObject(clientConnect);
-                    byte[] msg = Encoding.Unicode.GetBytes(result);
-                    int bytesSend = handler.Send(msg);
                     break;
+                case "get-clients":
+                    {
+                        clientConnect = new ClientConnect("clients-list", clientList);
+                        sendText = JsonConvert.SerializeObject(clientConnect);
+                        msg = Encoding.ASCII.GetBytes(sendText);
+                        bytesSend = handler.Send(msg);
+                        result = null;
+                    }
+                    break;
+                case "message":
+                    {
+                        Message deserializedMessage = JsonConvert.DeserializeObject<Message>(result);
+                        //deserializedMessage.
+                        string msgAck = JsonConvert.SerializeObject(new Message("message-ack", deserializedMessage.clientFrom, deserializedMessage.clientTo, null, Helpers.GetTimestamp(DateTime.Now)));
+                        string msgFailure = JsonConvert.SerializeObject(new Message("message-fail", deserializedMessage.clientFrom, deserializedMessage.clientTo, null, Helpers.GetTimestamp(DateTime.Now)));     
+                        var client = clientsConnected.Where(i => i.id == deserializedMessage.clientTo.id).Select(i => i.socket).FirstOrDefault();
+                        if (client != null)
+                        {
+                            client.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(deserializedMessage)));
+                            handler.Send(Encoding.ASCII.GetBytes(msgAck));
+                       }
+                       else
+                       {
+                            handler.Send(Encoding.ASCII.GetBytes(msgFailure));
+                       }
+                        result = null;
 
+                    }
+                    break;
             }
         }
 
@@ -249,7 +287,7 @@ namespace ServerSocketWpfApp
 
                 // Prepare the reply message 
                 byte[] byteData =
-                    Encoding.Unicode.GetBytes(str);
+                    Encoding.ASCII.GetBytes(str);
 
                 // Sends data asynchronously to a connected Socket 
                 handler.BeginSend(byteData, 0, byteData.Length, 0,
@@ -280,12 +318,11 @@ namespace ServerSocketWpfApp
         {
             try
             {
-                if (sListener.Any(i=>i.Connected))
-                {
-                    sListener.ForEach(i=>i.Shutdown(SocketShutdown.Receive));
-                    sListener.ForEach(i=>i.Close());
-                }
-
+                //if (sListener.Any(i => i.Connected))
+                //{
+                //    sListener.ForEach(i => i.Shutdown(SocketShutdown.Receive));
+                //    sListener.ForEach(i => i.Close());
+                //}
                 Close_Button.IsEnabled = false;
             }
             catch (Exception exc) { MessageBox.Show(exc.ToString()); }
