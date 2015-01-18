@@ -1,8 +1,4 @@
-﻿﻿﻿﻿// Houssem Dellai    
-// houssem.dellai@ieee.org    
-// +216 95 325 964    
-// Studying Software Engineering    
-// in the National Engineering School of Sfax (ENIS)   
+﻿
 
 using System;
 using System.Text;
@@ -18,6 +14,9 @@ using WpfApplication1.Comminication;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using ServerSocketWpfApp.Comminication;
+using System.Resources;
+using System.Globalization;
+using System.Collections;
 
 namespace ServerSocketWpfApp
 {
@@ -36,17 +35,23 @@ namespace ServerSocketWpfApp
 
     public partial class MainWindow : Window
     {
-        
+        public bool server = false;
+
         const int MAX_CLIENTS = 10;
         public List<ClientWorker> clientsConnected = new List<ClientWorker>();
         public AsyncCallback pfnWorkerCallBack;
+        public AsyncCallback pfnWorkerNodeCallBack;
+        public List<string> allNodesIps = new List<string>();
+        public int elNo = 0;
         public int port = 4511;
+        public int portNode = 4512;
         private Socket m_mainSocket;
+        private Socket m_nodeSocket;
+        private Socket[] m_nodeWorkerSocket = new Socket[10];
         private Socket[] m_workerSocket = new Socket[10];
         private int m_clientCount = 0;
-        //public List<Socket> sListener = new List<Socket>();
-        //public List<IPEndPoint> ipEndPoint = new List<IPEndPoint>();
-        Socket handler;
+        private int m_nodeCount = 0;
+        public Socket handler;
         public List<Client> clientList = new List<Client>();
         public List<int> portstClient = new List<int>();
         public String result = null;
@@ -78,12 +83,15 @@ namespace ServerSocketWpfApp
             {
                 // Resolves a host name to an IPHostEntry instance 
                 IPHostEntry ipHost = Dns.GetHostEntry("");
-
+                
                 // Gets first IP address associated with a localhost 
                 IPAddress ipAddr = Dns.Resolve("localhost").AddressList[0];
-
+                ResourceSet resourceSet = IPadressess.ResourceManager.GetResourceSet(CultureInfo.CurrentUICulture, true, true);
+               
                 // Creates a network endpoint 
-
+                m_nodeSocket = new Socket(AddressFamily.InterNetwork,
+                       SocketType.Stream,
+                       ProtocolType.Tcp);
                 m_mainSocket = new Socket(
                        ipAddr.AddressFamily,
                        SocketType.Stream,
@@ -91,15 +99,20 @@ namespace ServerSocketWpfApp
                        );
                 var portip = new IPEndPoint(ipAddr, port);
 
+                foreach (DictionaryEntry entry in resourceSet)
+                {
+                    var nodeEndPoint1 = new IPEndPoint(Dns.Resolve(entry.Value.ToString()).AddressList[0], portNode);
+                    m_nodeSocket.Bind(nodeEndPoint1);
+                    allNodesIps.Add(entry.Value.ToString());
+                }
 
-                // ipEndPoint.Add(portip);
-                // sListener.Add(m_mainSocket);
+                m_nodeSocket.BeginAccept(new AsyncCallback(OnNodeConnect), null);
+
+
                 m_mainSocket.Bind(portip);
                 m_mainSocket.Listen(15);
                 m_mainSocket.BeginAccept(new AsyncCallback(OnClientConnect), null);
                 // Associates a Socket with a local endpoint 
-
-
 
                 tbStatus.Text = "Server started.";
 
@@ -107,6 +120,25 @@ namespace ServerSocketWpfApp
 
             }
             catch (Exception exc) { MessageBox.Show(exc.ToString()); }
+        }
+
+        private void OnNodeConnect(IAsyncResult asyn)
+        {
+            try
+            {
+                m_nodeWorkerSocket[m_nodeCount] = m_nodeSocket.EndAccept(asyn);
+                WaitForNodeData(m_nodeWorkerSocket[m_nodeCount]);
+                ++m_nodeCount;
+                m_nodeSocket.BeginAccept(new AsyncCallback(OnNodeConnect), null);
+            }
+            catch (ObjectDisposedException)
+            {
+                System.Diagnostics.Debugger.Log(0, "1", "\n OnClientConnection: Socket has been closed\n");
+            }
+            catch (SocketException se)
+            {
+                MessageBox.Show(se.Message);
+            }
         }
 
         public void OnClientConnect(IAsyncResult asyn)
@@ -122,10 +154,6 @@ namespace ServerSocketWpfApp
                 WaitForData(m_workerSocket[m_clientCount]);
                 // Now increment the client count
                 ++m_clientCount;
-                // Display this client connection as a status message on the GUI	
-                String str = String.Format("Client # {0} connected", m_clientCount);
-                //textBoxMsg.Text = str;
-
                 // Since the main Socket is now free, it can go back and wait for
                 // other clients who are attempting to connect
                 m_mainSocket.BeginAccept(new AsyncCallback(OnClientConnect), null);
@@ -141,6 +169,31 @@ namespace ServerSocketWpfApp
 
         }
 
+        private void WaitForNodeData(Socket soc)
+        {
+            try
+            {
+                if (pfnWorkerNodeCallBack == null)
+                {
+                    pfnWorkerNodeCallBack = new AsyncCallback(OnNodeDataReceived);
+                } 
+                SocketPacket theSocPkt = new SocketPacket();
+                theSocPkt.m_currentSocket = soc;
+                // Start receiving any data written by the connected client
+                // asynchronously
+                soc.BeginReceive(theSocPkt.dataBuffer, 0,
+                                   theSocPkt.dataBuffer.Length,
+                                   SocketFlags.None,
+                                   pfnWorkerCallBack,
+                                   theSocPkt);
+            }
+            catch (SocketException se)
+            {
+                MessageBox.Show(se.Message);
+            }
+        }
+
+       
         public class SocketPacket
         {
             public System.Net.Sockets.Socket m_currentSocket;
@@ -173,6 +226,36 @@ namespace ServerSocketWpfApp
                 MessageBox.Show(se.Message);
             }
 
+        }
+        private void OnNodeDataReceived(IAsyncResult asyn)
+        {
+            try
+            {
+                SocketPacket socketData = (SocketPacket)asyn.AsyncState;
+
+                int iRx = 0;
+                
+                iRx = socketData.m_currentSocket.EndReceive(asyn);
+                char[] chars = new char[iRx + 1];
+                System.Text.Decoder d = System.Text.Encoding.UTF8.GetDecoder();
+                int charLen = d.GetChars(socketData.dataBuffer,
+                                         0, iRx, chars, 0);
+                System.String szData = new System.String(chars);
+               
+
+                //Logic(socketData.m_currentSocket, szData);
+                // Continue the waiting for data on the Socket
+                WaitForNodeData(socketData.m_currentSocket);
+
+            }
+            catch (ObjectDisposedException)
+            {
+                System.Diagnostics.Debugger.Log(0, "1", "\nOnDataReceived: Socket has been closed\n");
+            }
+            catch (SocketException se)
+            {
+                MessageBox.Show(se.Message);
+            }
         }
         // This the call back function which will be invoked when the socket
         // detects any client writing of data on the stream

@@ -39,3 +39,4 @@ D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp_Markup
 D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.g.resources
 D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.Properties.Resources.resources
 D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.csproj.GenerateResource.Cache
+D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.IPadressess.resources

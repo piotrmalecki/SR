@@ -61,6 +61,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Comminication\Election.cs" />
+    <Compile Include="IPadressess.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>IPadressess.resx</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -70,6 +76,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Comminication\Client.cs" />
+    <Compile Include="Comminication\ClientLogic.cs" />
     <Compile Include="Comminication\ClientWorker.cs" />
     <Compile Include="Comminication\Helpers.cs" />
     <Compile Include="Comminication\Message.cs" />
@@ -95,6 +102,10 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="IPadressess.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>IPadressess.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

@@ -1,8 +1,4 @@
-﻿﻿﻿﻿// Houssem Dellai    
-// houssem.dellai@ieee.org    
-// +216 95 325 964    
-// Studying Software Engineering    
-// in the National Engineering School of Sfax (ENIS)   
+﻿
 
 using System;
 using System.Text;
