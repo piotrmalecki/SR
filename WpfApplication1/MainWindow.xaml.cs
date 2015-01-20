@@ -54,7 +54,7 @@ namespace WpfApplication1
 
                 // Resolves a host name to an IPHostEntry instance            
                 IPHostEntry ipHost = Dns.GetHostEntry("");
-                IPAddress ipAddr = Dns.Resolve("localhost").AddressList[0];
+                IPAddress ipAddr = Dns.Resolve(Helpers.getMyIPAddress()).AddressList[0];
                 IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, port);
 
                 m_clientSocket.Connect(ipEndPoint);
@@ -215,20 +215,12 @@ namespace WpfApplication1
 
         private void Update_Click(object sender, RoutedEventArgs e)
         {
-            StringBuilder sb = new StringBuilder();
-            StringWriter sw = new StringWriter(sb);
-
-            using (JsonWriter writer = new JsonTextWriter(sw))
-            {
-                writer.Formatting = Formatting.Indented;
-                writer.WriteStartObject();
-                writer.WritePropertyName("type");
-                writer.WriteValue("get-clients");
-                writer.WriteEndObject();
-            }
+            StringBuilder sb = Helpers.typeJson("type", "get-clients");
             Send(m_clientSocket, sb.ToString());
             //sendDone.WaitOne();
         }
+
+
         private void Logic(string content)
         {
             JObject json = null;
@@ -258,8 +250,6 @@ namespace WpfApplication1
                                 ClintsListBox.Items.Add(item.name + "  " + item.id);
                             }
                         });
-
-
                         result = null;
                     }
                     break;

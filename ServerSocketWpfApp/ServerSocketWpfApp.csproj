@@ -62,6 +62,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Comminication\Election.cs" />
+    <Compile Include="Comminication\NodeWorker.cs" />
+    <Compile Include="Comminication\ElectionBreak.cs" />
     <Compile Include="IPadressess.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

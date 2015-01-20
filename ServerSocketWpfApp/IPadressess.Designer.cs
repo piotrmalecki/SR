@@ -59,32 +59,5 @@ namespace ServerSocketWpfApp {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 192.168.13.01.
-        /// </summary>
-        internal static string ip1 {
-            get {
-                return ResourceManager.GetString("ip1", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 192.168.13.02.
-        /// </summary>
-        internal static string ip2 {
-            get {
-                return ResourceManager.GetString("ip2", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 192.168.13.03.
-        /// </summary>
-        internal static string ip3 {
-            get {
-                return ResourceManager.GetString("ip3", resourceCulture);
-            }
-        }
     }
 }

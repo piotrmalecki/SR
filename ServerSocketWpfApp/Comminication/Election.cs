@@ -22,6 +22,8 @@ namespace ServerSocketWpfApp.Comminication
 
         public int elNo { get; set; }
 
+        public bool received = false;
+
         public Member(String _ip, int _elNo)
         {
             ip = _ip;

@@ -9,6 +9,7 @@
         <Button Name="Send_Button" Content="Clear" HorizontalAlignment="Left" Margin="60,429,0,0" VerticalAlignment="Top" Width="120" Click="Send_Click" Background="Black" Foreground="White"/>
         <Button Name="Close_Button" Content="Close connection" HorizontalAlignment="Left" Margin="60,475,0,0" VerticalAlignment="Top" Width="120" Click="Close_Click" Background="Black" Foreground="White"/>
         <TextBlock HorizontalAlignment="Left" Margin="60,101,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="176" Height="16"><Run Text="Log"/><LineBreak/><Run/></TextBlock>
+        <Button Name="Connected_Button" Content="Connect" HorizontalAlignment="Left" Margin="60,71,0,0" Click="Connect_Click" Background="Black" Foreground="White" VerticalAlignment="Top" Width="120" Height="21"/>
 
     </Grid>
 </Window>
