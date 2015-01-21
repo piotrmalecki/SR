@@ -1,0 +1,6 @@
+D:\Studia\SR\SRProject\C#\Test\bin\Debug\Test.exe.config
+D:\Studia\SR\SRProject\C#\Test\bin\Debug\Test.exe
+D:\Studia\SR\SRProject\C#\Test\bin\Debug\Test.pdb
+D:\Studia\SR\SRProject\C#\Test\obj\Debug\Test.csprojResolveAssemblyReference.cache
+D:\Studia\SR\SRProject\C#\Test\obj\Debug\Test.exe
+D:\Studia\SR\SRProject\C#\Test\obj\Debug\Test.pdb

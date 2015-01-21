@@ -13,6 +13,7 @@ namespace WpfApplication1.Comminication
 
         public List<Client> list = new List<Client>();
 
+        public int elNo { get; set; }
         
         public ClientConnect(String _type, List<Client> _list)
         {
@@ -24,6 +25,7 @@ namespace WpfApplication1.Comminication
     {
         public String id { get; set; }
 
+        public string node { get; set; }
         public String name { get; set; }
 
         public Client(String _id, String _name)
