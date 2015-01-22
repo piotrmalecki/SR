@@ -16,7 +16,7 @@ namespace ServerSocketWpfApp.Comminication
             members = _list;
         }
     }
-    private class Member
+    public class Member
     {
         public String ip { get; set; }
 

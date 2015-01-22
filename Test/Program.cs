@@ -14,6 +14,10 @@ namespace Test
                                                        "192.168.03.48",
                                                         "192.168.03.23"};
             var stri = ipStrings.Max(i => Convert.ToInt32(i.Split('.')[3]));
+            String s = "nowy";
+            Console.WriteLine(s[3]);
+            Console.Read();
+
         }
     }
 }

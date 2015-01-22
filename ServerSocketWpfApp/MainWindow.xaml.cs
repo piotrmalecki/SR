@@ -49,9 +49,10 @@ namespace ServerSocketWpfApp
         string myIpAddress = null;
         public int elNo = 0;
         public int port = 4511;
-        public int portNode = 4512;
+        public int portNode = 45120;
         private Socket m_mainSocket;
-        private Socket m_nodeSocket;
+        private Socket m_nodeSocketListener;
+        private Socket m_nodeSocketConnector;
         private Socket[] m_nodeWorkerSocket = new Socket[10];
         private Socket[] m_workerSocket = new Socket[10];
         private int m_clientCount = 0;
@@ -97,9 +98,12 @@ namespace ServerSocketWpfApp
                 ResourceSet resourceSet = IPadressess.ResourceManager.GetResourceSet(CultureInfo.CurrentUICulture, true, true);
 
                 // Creates a network endpoint 
-                m_nodeSocket = new Socket(AddressFamily.InterNetwork,
+                m_nodeSocketListener = new Socket(AddressFamily.InterNetwork,
                        SocketType.Stream,
                        ProtocolType.Tcp);
+                m_nodeSocketConnector = new Socket(AddressFamily.InterNetwork,
+                      SocketType.Stream,
+                      ProtocolType.Tcp);
                 m_mainSocket = new Socket(
                        ipAddr.AddressFamily,
                        SocketType.Stream,
@@ -107,21 +111,30 @@ namespace ServerSocketWpfApp
                        );
                 var portip = new IPEndPoint(ipAddr, port);
 
-                /*TO BE UNCOMMENTED WHEN OTHER NODES ARE
-                 * foreach (DictionaryEntry entry in resourceSet)
-                {
-                 * //nie łączyć się ze sobą ani nie dodawc sienie do ilPoinList
-                    var nodeEndPoint1 = new IPEndPoint(Dns.Resolve(entry.Value.ToString()).AddressList[0], portNode);
-                    ipPointList.Add(nodeEndPoint1);
-                    m_nodeSocket.Bind(nodeEndPoint1);
-                    allNodesIps.Add(entry.Value.ToString());
-                }
+                
+                
+                  //nie łączyć się ze sobą ani nie dodawc sienie do ilPoinList
+                                          
 
-                m_nodeSocket.BeginAccept(new AsyncCallback(OnNodeConnect), null);*/
+                   
+                        var nodeEndPoint1 = new IPEndPoint(IPAddress.Parse(myIpAddress), portNode);
+                        
+                        m_nodeSocketListener.Bind(nodeEndPoint1);
+                       // allNodesIps.Add(entry.Value.ToString());
+                    
+                foreach (DictionaryEntry entry in resourceSet)
+                {
+                    if (entry.Value.ToString() != myIpAddress && entry.Value.ToString() != "") { 
+                    var nodeEndPoint2 = new IPEndPoint(IPAddress.Parse(entry.Value.ToString()), portNode);
+                    ipPointList.Add(nodeEndPoint2);
+                    }
+                }
+                  m_nodeSocketListener.Listen(100);
+                m_nodeSocketListener.BeginAccept(new AsyncCallback(OnNodeConnect), null);
 
 
                 m_mainSocket.Bind(portip);
-                m_mainSocket.Listen(15);
+                m_mainSocket.Listen(100);
                 m_mainSocket.BeginAccept(new AsyncCallback(OnClientConnect), null);
                 // Associates a Socket with a local endpoint 
 
@@ -139,7 +152,7 @@ namespace ServerSocketWpfApp
             {
                 foreach (var item in ipPointList)
                 {
-                    m_nodeSocket.Connect(item);
+                    m_nodeSocketConnector.Connect(item);
                 }
 
             }
@@ -154,23 +167,29 @@ namespace ServerSocketWpfApp
             try
             {   // ktoś się dołączył, trzeba sprawdzić czy jestem serwerem
                 server = false;
-
-                m_nodeWorkerSocket[m_nodeCount] = m_nodeSocket.EndAccept(asyn);
-                nodesConnected.Add(new NodeWorker(m_workerSocket[m_clientCount].RemoteEndPoint.ToString().Split(':')[0], m_nodeWorkerSocket[m_nodeCount]));
-                WaitForNodeData(m_nodeWorkerSocket[m_nodeCount]);
+                Socket soc = m_nodeSocketListener.EndAccept(asyn);
+                m_nodeWorkerSocket[m_nodeCount] = soc;
+                var tmp = m_nodeWorkerSocket[m_nodeCount].RemoteEndPoint.ToString().ToString().Split(':')[0];
+                nodesConnected.Add(new NodeWorker(tmp, soc));
+                WaitForNodeData(m_nodeSocketConnector);
                 ++m_nodeCount;
 
     
-                m_nodeSocket.BeginAccept(new AsyncCallback(OnNodeConnect), null);
+                m_nodeSocketListener.BeginAccept(new AsyncCallback(OnNodeConnect), null);
 
 
 
                 if (Convert.ToInt32(myIpAddress.Split('.')[3]) <  Convert.ToInt32(nodesConnected.Min(i=>i.ip.Split('.')[3])) )//ForEach(i => Convert.ToInt32(i.ip.Split(new char[] { ' ' })[3])).Min() > 5)
                            {
                                Election election = new Election("election", new List<Member> { new Member(myIpAddress, elNo) });
-                               m_nodeWorkerSocket[0].Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(election)));
+                               soc.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(election)));
+                               this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
+                               {
+                                   tbMsgReceived.Text += "Wyslany election do : "+soc.RemoteEndPoint.ToString() + "\n";
+                                  
+                               });
                                //timer = new Timer(OnTimer, null, 1000, 0);
-                            //connect = JsonConvert.SerializeObject(election);
+                               //connect = JsonConvert.SerializeObject(election);
                            }
 	                
                 
