@@ -49,10 +49,11 @@ namespace ServerSocketWpfApp
         string myIpAddress = null;
         public int elNo = 0;
         public int port = 4511;
-        public int portNode = 45120;
+        public int portNode = 45000;
         private Socket m_mainSocket;
         private Socket m_nodeSocketListener;
-        private Socket m_nodeSocketConnector;
+        private Socket m_nodeSocketConnectorSingle;
+        private Socket [] m_nodeSocketConnector = new Socket[10]; 
         private Socket[] m_nodeWorkerSocket = new Socket[10];
         private Socket[] m_workerSocket = new Socket[10];
         private int m_clientCount = 0;
@@ -101,9 +102,10 @@ namespace ServerSocketWpfApp
                 m_nodeSocketListener = new Socket(AddressFamily.InterNetwork,
                        SocketType.Stream,
                        ProtocolType.Tcp);
-                m_nodeSocketConnector = new Socket(AddressFamily.InterNetwork,
-                      SocketType.Stream,
-                      ProtocolType.Tcp);
+                m_nodeSocketConnectorSingle = new Socket(AddressFamily.InterNetwork,
+                    SocketType.Stream,
+                    ProtocolType.Tcp);
+                
                 m_mainSocket = new Socket(
                        ipAddr.AddressFamily,
                        SocketType.Stream,
@@ -124,14 +126,14 @@ namespace ServerSocketWpfApp
                     
                 foreach (DictionaryEntry entry in resourceSet)
                 {
-                    if (entry.Value.ToString() != myIpAddress && entry.Value.ToString() != "") { 
+                    if (entry.Value.ToString() != "") 
+                    { 
                     var nodeEndPoint2 = new IPEndPoint(IPAddress.Parse(entry.Value.ToString()), portNode);
                     ipPointList.Add(nodeEndPoint2);
                     }
                 }
                   m_nodeSocketListener.Listen(100);
                 m_nodeSocketListener.BeginAccept(new AsyncCallback(OnNodeConnect), null);
-
 
                 m_mainSocket.Bind(portip);
                 m_mainSocket.Listen(100);
@@ -148,15 +150,45 @@ namespace ServerSocketWpfApp
 
         private void Connect_Click(object sender, RoutedEventArgs e)
         {
+            bool isError = false;
             try
             {
-                foreach (var item in ipPointList)
+                for (int i = 0; i < ipPointList.Count(); i++ )
                 {
-                    m_nodeSocketConnector.Connect(item);
-                }
+                    try
+                    {
+                        m_nodeSocketConnectorSingle.Connect(ipPointList.ElementAt(i));
+                        
+                        if (m_nodeSocketConnectorSingle.Connected)
+                        {
+                            Election election = new Election("election", new List<Member> { new Member(myIpAddress, elNo) });
+                            m_nodeSocketConnectorSingle.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(election)));
+                            this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
+                            {
+                                tbMsgReceived.Text += "Wyslany election do : " + m_nodeSocketConnectorSingle.RemoteEndPoint.ToString() + "\n";
 
+                            });
+                            server = false;
+                            break;
+                        }
+                        else { server = true; }
+                    }
+                    catch (SocketException)
+                    {
+                        isError = true;
+                    }
+                    if (isError) continue;
+                }
+                if(server)
+                {
+                    this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
+                    {
+                        tbMsgReceived.Text += "Jestem sam jestem serwerem\n";
+
+                    });
+                }
             }
-            catch (SocketException se)
+            catch (Exception se)
             {
                 MessageBox.Show(se.Message);
             }
@@ -171,7 +203,7 @@ namespace ServerSocketWpfApp
                 m_nodeWorkerSocket[m_nodeCount] = soc;
                 var tmp = m_nodeWorkerSocket[m_nodeCount].RemoteEndPoint.ToString().ToString().Split(':')[0];
                 nodesConnected.Add(new NodeWorker(tmp, soc));
-                WaitForNodeData(m_nodeSocketConnector);
+                WaitForNodeData(soc);
                 ++m_nodeCount;
 
     
@@ -179,18 +211,12 @@ namespace ServerSocketWpfApp
 
 
 
-                if (Convert.ToInt32(myIpAddress.Split('.')[3]) <  Convert.ToInt32(nodesConnected.Min(i=>i.ip.Split('.')[3])) )//ForEach(i => Convert.ToInt32(i.ip.Split(new char[] { ' ' })[3])).Min() > 5)
-                           {
-                               Election election = new Election("election", new List<Member> { new Member(myIpAddress, elNo) });
-                               soc.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(election)));
-                               this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
-                               {
-                                   tbMsgReceived.Text += "Wyslany election do : "+soc.RemoteEndPoint.ToString() + "\n";
-                                  
-                               });
+                //if (Convert.ToInt32(myIpAddress.Split('.')[3]) <  Convert.ToInt32(nodesConnected.Min(i=>i.ip.Split('.')[3])))//ForEach(i => Convert.ToInt32(i.ip.Split(new char[] { ' ' })[3])).Min() > 5)
+                     //      {
+                              
                                //timer = new Timer(OnTimer, null, 1000, 0);
                                //connect = JsonConvert.SerializeObject(election);
-                           }
+                       //    }
 	                
                 
             }
@@ -248,7 +274,7 @@ namespace ServerSocketWpfApp
                 soc.BeginReceive(theSocPkt.dataBuffer, 0,
                                    theSocPkt.dataBuffer.Length,
                                    SocketFlags.None,
-                                   pfnWorkerCallBack,
+                                   pfnWorkerNodeCallBack,
                                    theSocPkt);
             }
             catch (SocketException se)
@@ -364,8 +390,9 @@ namespace ServerSocketWpfApp
             JObject json = null;
             try
             {
-                resultNode += content;
-                json = JObject.Parse(result);
+                //resultNode += content;
+                json = JObject.Parse(content);
+                resultNode = content;
             }
             catch (Exception)
             {
@@ -378,6 +405,11 @@ namespace ServerSocketWpfApp
                     { // dodac timeout
                         Election deserializedElection = JsonConvert.DeserializeObject<Election>(resultNode);
 
+                        this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
+                        {
+                            tbMsgReceived.Text += "Odebrany election : " + deserializedElection.members.ToString() + "\n";
+
+                        });
                         if (elNo <= deserializedElection.members.Max(i => i.elNo))
                         {
                             StringBuilder sb = Helpers.typeJson("type", "election-ack");
@@ -405,6 +437,7 @@ namespace ServerSocketWpfApp
                             else
                             {
                                 deserializedElection.members.Add(new Member(myIpAddress, elNo));
+                                //KOLEJNY Z LISTY !!
                                 Socket sock = nodesConnected.Where(i => !deserializedElection.members.Select(q=>q.ip).Contains(i.ip)).Select(i=>i.socket).FirstOrDefault();
 
                                 if (sock == null)

@@ -61,7 +61,7 @@ namespace ServerSocketWpfApp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 192.168.0.12.
+        ///   Looks up a localized string similar to 192.168.0.20.
         /// </summary>
         internal static string ip1 {
             get {
@@ -70,7 +70,7 @@ namespace ServerSocketWpfApp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 192.168.0.10.
+        ///   Looks up a localized string similar to .
         /// </summary>
         internal static string ip2 {
             get {

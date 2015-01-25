@@ -118,10 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ip1" xml:space="preserve">
-    <value>192.168.0.12</value>
+    <value>192.168.0.20</value>
   </data>
   <data name="ip2" xml:space="preserve">
-    <value>192.168.0.10</value>
+    <value />
   </data>
   <data name="String1" xml:space="preserve">
     <value />
