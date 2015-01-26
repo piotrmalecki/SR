@@ -58,5 +58,24 @@ namespace WpfApplication1.Comminication
             }
             return sb;
         }
+
+        public static string GetNextIPAdress(List<IPEndPoint> ipEndPointList, string startIP) 
+        {
+            return "";
+        }
+        public static IPEndPoint GetNextIPAdressIPEndPoint(List<IPEndPoint> ipEndPointList, string startIP)
+        {   // jesli jest ostatni to zwroć pierwszy
+            var tmp = ipEndPointList.Select(i => Convert.ToInt32(i.Address.ToString().Split('.')[3])).Max();//.Split('.')[3];
+            string tmp2 = startIP.Split('.')[3];
+            if (ipEndPointList.Select(i => Convert.ToInt32(i.Address.ToString().Split('.')[3])).Max() <= Convert.ToInt32(startIP.Split('.')[3]))
+            {
+                return ipEndPointList[0];
+            }
+            else
+            {
+                return ipEndPointList.Where(i => Convert.ToInt32(i.Address.ToString().Split('.')[3]) > Convert.ToInt32(startIP.ToString().Split('.')[3])).FirstOrDefault();
+            }
+            
+        }
     }
 }

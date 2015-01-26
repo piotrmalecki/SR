@@ -43,3 +43,16 @@ D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.IPadre
 D:\Additional\SR2\ServerSocketWpfApp\bin\Debug\ServerSocketWpfApp.exe.config
 D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.exe
 D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.pdb
+D:\Additional\SR2\ServerSocketWpfApp\bin\Debug\ServerSocketWpfApp.exe
+D:\Additional\SR2\ServerSocketWpfApp\bin\Debug\ServerSocketWpfApp.pdb
+D:\Additional\SR2\ServerSocketWpfApp\bin\Debug\Newtonsoft.Json.dll
+D:\Additional\SR2\ServerSocketWpfApp\bin\Debug\Newtonsoft.Json.xml
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.csprojResolveAssemblyReference.cache
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\MainWindow.baml
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\MainWindow.g.cs
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\App.g.cs
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp_MarkupCompile.cache
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.g.resources
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.Properties.Resources.resources
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.IPadressess.resources
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.csproj.GenerateResource.Cache

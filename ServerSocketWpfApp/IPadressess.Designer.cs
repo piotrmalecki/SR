@@ -61,7 +61,7 @@ namespace ServerSocketWpfApp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 192.168.0.20.
+        ///   Looks up a localized string similar to 192.168.1.120.
         /// </summary>
         internal static string ip1 {
             get {
@@ -70,7 +70,7 @@ namespace ServerSocketWpfApp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to 192.168.1.121.
         /// </summary>
         internal static string ip2 {
             get {
@@ -79,11 +79,11 @@ namespace ServerSocketWpfApp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to 193.168.1.123.
         /// </summary>
-        internal static string String1 {
+        internal static string ip3 {
             get {
-                return ResourceManager.GetString("String1", resourceCulture);
+                return ResourceManager.GetString("ip3", resourceCulture);
             }
         }
     }
