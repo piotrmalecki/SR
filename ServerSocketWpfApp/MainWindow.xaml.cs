@@ -147,7 +147,7 @@ namespace ServerSocketWpfApp
             }
             catch (Exception exc) { MessageBox.Show(exc.ToString()); }
         }
-
+        //godzina
         private void Connect_Click(object sender, RoutedEventArgs e)
         {
             bool isError = false;

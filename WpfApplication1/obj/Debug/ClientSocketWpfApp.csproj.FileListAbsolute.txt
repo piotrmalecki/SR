@@ -38,3 +38,6 @@ D:\Studia\SR\SRProject\C#\WpfApplication1\obj\Debug\WpfApplication1_MarkupCompil
 D:\Studia\SR\SRProject\C#\WpfApplication1\obj\Debug\WpfApplication1.g.resources
 D:\Studia\SR\SRProject\C#\WpfApplication1\obj\Debug\WpfApplication1.Properties.Resources.resources
 D:\Studia\SR\SRProject\C#\WpfApplication1\obj\Debug\ClientSocketWpfApp.csproj.GenerateResource.Cache
+D:\Additional\SR2\WpfApplication1\bin\Debug\WpfApplication1.exe.config
+D:\Additional\SR2\WpfApplication1\obj\Debug\WpfApplication1.exe
+D:\Additional\SR2\WpfApplication1\obj\Debug\WpfApplication1.pdb

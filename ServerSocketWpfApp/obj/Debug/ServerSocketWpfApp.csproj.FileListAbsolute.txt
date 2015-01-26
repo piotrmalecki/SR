@@ -40,3 +40,6 @@ D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.g.reso
 D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.Properties.Resources.resources
 D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.csproj.GenerateResource.Cache
 D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.IPadressess.resources
+D:\Additional\SR2\ServerSocketWpfApp\bin\Debug\ServerSocketWpfApp.exe.config
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.exe
+D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.pdb
