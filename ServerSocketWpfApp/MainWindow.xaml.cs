@@ -64,7 +64,8 @@ namespace ServerSocketWpfApp
         public String result = null;
         public String resultNode = null;
         public Timer timer;
-
+        List<string> ipList = new List<string> { "192.168.1.100",
+                                                  "192.168.1.101", "192.168.1.102", "192.168.1.103"};
         private TextBox tbAux = new TextBox();
 
         public MainWindow()
@@ -116,25 +117,22 @@ namespace ServerSocketWpfApp
                        );
                 var portip = new IPEndPoint(ipAddr, port);
 
-
-
                 //nie łączyć się ze sobą ani nie dodawc sienie do ilPoinList
-
-
 
                 var nodeEndPoint1 = new IPEndPoint(IPAddress.Parse(myIpAddress), portNode);
 
                 m_nodeSocketListener.Bind(nodeEndPoint1);
                 // allNodesIps.Add(entry.Value.ToString());
 
-                foreach (DictionaryEntry entry in resourceSet)
+                foreach (var item in ipList)
                 {
-                    if (entry.Value.ToString() != "")
+                    if (item.ToString() != "")
                     {
-                        var nodeEndPoint2 = new IPEndPoint(IPAddress.Parse(entry.Value.ToString()), portNode);
+                        var nodeEndPoint2 = new IPEndPoint(IPAddress.Parse(item.ToString()), portNode);
                         ipPointList.Add(nodeEndPoint2);
                     }
                 }
+                // result  = ipPointList.OrderByDescending(i=> Convert.ToInt32(i.Address.ToString().Split('.')[3]));
                 m_nodeSocketListener.Listen(100);
                 m_nodeSocketListener.BeginAccept(new AsyncCallback(OnNodeConnect), null);
 
@@ -153,45 +151,68 @@ namespace ServerSocketWpfApp
         //godzina
         private void Connect_Click(object sender, RoutedEventArgs e)
         {
-            bool isError = false;
+
             try
             {
                 // starting element int a =
-                var next = Helpers.GetNextIPAdressIPEndPoint(ipPointList, myIpAddress);
-                while (true)
-                {
-                    try
-                    {   //sparwdzic czy jest polaczenie
-                        if (!next.Address.ToString().Equals(myIpAddress.ToString())) m_nodeSocketConnectorSingle.Connect(next);
-                        else break;
-                        if (m_nodeSocketConnectorSingle.Connected)
-                        {
-                            Election election = new Election("election", new List<Member> { new Member(myIpAddress, elNo) });
-                            m_nodeSocketConnectorSingle.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(election)));
-                            nodesConnected.Add(new NodeWorker(next.Address.ToString(), m_nodeSocketConnectorSingle));
-                            addLogComment("Election send : " + m_nodeSocketConnectorSingle.RemoteEndPoint.ToString() + "ElNo: " + elNo + "\n");
-                            WaitForNodeData(m_nodeSocketConnectorSingle);
-                            server = false;
-                            break;
-                        }
-                        else { server = true; }
-                    }
-                    catch (SocketException)
-                    {
-                        next = Helpers.GetNextIPAdressIPEndPoint(ipPointList, next.Address.ToString());
-                        isError = true;
-                    }
-                    if (isError) continue;
-                }
-                if (server)
-                {
-                    addLogComment("Jestem sam jestem serwerem\n");
-
-                }
+                startElection();
             }
             catch (Exception se)
             {
                 MessageBox.Show(se.Message);
+            }
+        }
+
+        private void startElection()
+        {
+            bool isError = false;
+            var next = Helpers.GetNextIPAdressIPEndPoint(ipPointList, myIpAddress);
+            while (true)
+            {
+                try
+                {   //sparwdzic czy jest polaczenie
+                    if (!next.Address.ToString().Equals(myIpAddress.ToString())) m_nodeSocketConnectorSingle.Connect(next);
+                        //m_nodeSocketConnectorSingle.BeginConnect(next, new AsyncCallback(ConnectCallback), m_nodeSocketConnectorSingle);
+                    else break;
+                    if (m_nodeSocketConnectorSingle.Connected)
+                    {
+                        Election election = new Election("election", new List<Member> { new Member(myIpAddress, elNo) });
+                        m_nodeSocketConnectorSingle.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(election)));
+                        nodesConnected.Add(new NodeWorker(next.Address.ToString(), m_nodeSocketConnectorSingle));
+                        addLogComment("Election send : " + m_nodeSocketConnectorSingle.RemoteEndPoint.ToString() + "ElNo: " + elNo + "\n");
+                        WaitForNodeData(m_nodeSocketConnectorSingle);
+                        server = false;
+                        break;
+                    }
+                    else { server = true; }
+                }
+                catch (SocketException)
+                {
+                    next = Helpers.GetNextIPAdressIPEndPoint(ipPointList, next.Address.ToString());
+                    isError = true;
+                }
+                if (isError) continue;
+            }
+            if (server)
+            {
+                addLogComment("Jestem sam jestem serwerem\n");
+
+            }
+        }
+
+        private void ConnectCallback(IAsyncResult ar)
+        {
+            try
+            {
+                Socket client = (Socket)ar.AsyncState;
+
+                // Complete the connection.
+                client.EndConnect(ar);
+            }
+            catch (Exception e)
+            {
+
+                MessageBox.Show(e.Message);
             }
         }
 
@@ -354,6 +375,7 @@ namespace ServerSocketWpfApp
             }
             catch (SocketException se)
             {
+                //tutaj ten exception przy probie wys
                 MessageBox.Show(se.Message);
             }
         }
@@ -398,6 +420,10 @@ namespace ServerSocketWpfApp
             try
             {
                 //resultNode += content;
+                if (true)
+                {
+                    return;
+                }
                 json = JObject.Parse(content);
                 resultNode = content;
             }
@@ -412,7 +438,7 @@ namespace ServerSocketWpfApp
                     { // dodac timeout
                         Election deserializedElection = JsonConvert.DeserializeObject<Election>(resultNode);
                         addLogComment("Odebrany election od : " + handler.RemoteEndPoint.ToString());
-                        
+
                         if (elNo <= deserializedElection.members.Max(i => i.elNo))
                         {
                             StringBuilder sb = Helpers.typeJson("type", "election-ack");
@@ -433,12 +459,13 @@ namespace ServerSocketWpfApp
                                 var sendTo = Helpers.NextSocket(electionDone.members, myIpAddress);
                                 if (sendTo != null)
                                 {
+                                    electionDone.elNo = elNo;
                                     nodesConnected.Where(i => i.ip.Equals(sendTo)).Select(i => i.socket).FirstOrDefault().Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(electionDone)));
                                     addLogComment("Wysłany election done do : " + sendTo.ToString());
                                 }
                                 var tmp = electionDone.members.Max(i => Convert.ToInt32(i.ip.Split('.')[3]));
                                 serverIP = ipPointList.Where(i => Convert.ToInt32(i.Address.ToString().Split('.')[3]) == tmp).Select(i => i.Address.ToString()).FirstOrDefault();
-                               // serverIP = nodesConnected.Where(i => Convert.ToInt32(i.ip.Split('.')[3]) == tmp).Select(i => i.ip).FirstOrDefault();
+                                // serverIP = nodesConnected.Where(i => Convert.ToInt32(i.ip.Split('.')[3]) == tmp).Select(i => i.ip).FirstOrDefault();
                                 if (myIpAddress == serverIP)
                                 {
                                     //send ping
@@ -450,7 +477,7 @@ namespace ServerSocketWpfApp
                                     }
                                     foreach (var item in clientList)
                                     {
-                                        item.node = handler.RemoteEndPoint.ToString().Split(':')[0].ToString();
+                                        item.node = handler.LocalEndPoint.ToString().Split(':')[0].ToString();
                                     }
                                     serverClients.Add(new ServerWorkerer(serverIP, handler, clientList));
                                 }
@@ -476,7 +503,7 @@ namespace ServerSocketWpfApp
                                             {
                                                 m_nodeSocketConnectorSingle.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(deserializedElection)));
                                                 addLogComment("Wysłany election do : " + m_nodeSocketConnectorSingle.RemoteEndPoint.ToString());
-                                                nodesConnected.Add(new NodeWorker (next.Address.ToString(), m_nodeSocketConnectorSingle));
+                                                nodesConnected.Add(new NodeWorker(next.Address.ToString(), m_nodeSocketConnectorSingle));
                                                 break;
                                             }
                                         }
@@ -523,9 +550,42 @@ namespace ServerSocketWpfApp
                     {
                         addLogComment("Odebrany election-break od " + handler.RemoteEndPoint.ToString());
                         ElectionBreak deserializedElection = JsonConvert.DeserializeObject<ElectionBreak>(resultNode);
-                        serverIP = deserializedElection.ipSerwer;
+
+                        serverIP = deserializedElection.server;
                         elNo = deserializedElection.elNo;
+                        addLogComment("Znam serwer  " + serverIP);
                         //rejestracja u serwera
+
+                        ClientConnect clientsConnect = new ClientConnect("node-update", clientList);
+                        var sentTo = nodesConnected.Where(i => i.ip == serverIP).Select(i => i.socket).FirstOrDefault();
+                        if (sentTo != null)
+                        {
+                            sentTo.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(clientsConnect)));
+                            
+                        }
+                        else
+                        {
+                            try
+                            {
+                                var newSocket = new Socket(AddressFamily.InterNetwork,SocketType.Stream,
+                                                    ProtocolType.Tcp);
+                                IPAddress ipAddr = IPAddress.Parse(serverIP);
+                                newSocket.Connect(ipAddr,portNode);
+
+                                if (newSocket.Connected)
+                                {
+                                    newSocket.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(deserializedElection)));
+                                    addLogComment("Wysłałem node-update do serwera do " + newSocket.RemoteEndPoint.ToString());
+                                }
+                                
+                            }
+                            catch (SocketException ę)
+                            {
+                                //robie elekcje
+                                startElection();
+                            }
+                        }
+
                         resultNode = null;
                         //tiemout
                     }
@@ -536,6 +596,8 @@ namespace ServerSocketWpfApp
                         Election deserializedElection = JsonConvert.DeserializeObject<Election>(resultNode);
                         Election electionDone = new Election("election-done", deserializedElection.members);
 
+                        //zmiana Łuczka
+                        elNo = deserializedElection.elNo;
                         foreach (var item in electionDone.members)
                         {
                             if (item.ip.Equals(myIpAddress)) { item.received = true; item.elNo = elNo; }
@@ -544,12 +606,13 @@ namespace ServerSocketWpfApp
                         //var sendTo = electionDone.members.Where(i => !i.received).Select(i => i.ip).FirstOrDefault();
                         if (sendTo != null)
                         {
+                            electionDone.elNo = elNo;
                             nodesConnected.Where(i => i.ip.Equals(sendTo)).Select(i => i.socket).FirstOrDefault().Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(electionDone)));
                             addLogComment("Wysłany election-done do " + handler.RemoteEndPoint.ToString());
                         }
                         var tmp = electionDone.members.Max(i => Convert.ToInt32(i.ip.Split('.')[3]));
                         //serverIP = nodesConnected.Where(i => Convert.ToInt32(i.ip.Split('.')[3]) == tmp).Select(i => i.ip).FirstOrDefault();
-                        serverIP = ipPointList.Where(i => Convert.ToInt32(i.Address.ToString().Split('.')[3]) == tmp).Select(i=>i.Address.ToString()).FirstOrDefault();
+                        serverIP = ipPointList.Where(i => Convert.ToInt32(i.Address.ToString().Split('.')[3]) == tmp).Select(i => i.Address.ToString()).FirstOrDefault();
                         //zdjąć timeout
 
                         if (myIpAddress == serverIP)
@@ -564,7 +627,7 @@ namespace ServerSocketWpfApp
                             //jak powiedziec 
                             foreach (var item in clientList)
                             {
-                                item.node = handler.RemoteEndPoint.ToString().Split(':')[0].ToString();
+                                item.node = handler.LocalEndPoint.ToString().Split(':')[0].ToString();
                             }
                             serverClients.Add(new ServerWorkerer(serverIP, handler, clientList));
                         }
@@ -590,12 +653,14 @@ namespace ServerSocketWpfApp
                         addLogComment("Dostałem node-update od " + handler.RemoteEndPoint.ToString());
                         ClientConnect clientsConnect = JsonConvert.DeserializeObject<ClientConnect>(resultNode);
 
-                        foreach (var item in clientsConnect.list)
+                        if (clientsConnect.clients != null)
                         {
-                            item.node = handler.RemoteEndPoint.ToString().Split(':')[0].ToString();
+                            foreach (var item in clientsConnect.clients)
+                            {
+                                item.node = handler.RemoteEndPoint.ToString().Split(':')[0].ToString();
+                            }
+                            serverClients.Add(new ServerWorkerer(handler.RemoteEndPoint.ToString().Split(':')[0].ToString(), handler, clientsConnect.clients));
                         }
-                        serverClients.Add(new ServerWorkerer(handler.RemoteEndPoint.ToString().Split(':')[0].ToString(), handler, clientsConnect.list));
-
                         handler.Send(Encoding.ASCII.GetBytes(Helpers.typeJson("type", "node-update-ack").ToString()));
                         addLogComment("Wysłałem node-update-ack do " + handler.RemoteEndPoint.ToString());
                         //zdjąć timeout
@@ -633,6 +698,7 @@ namespace ServerSocketWpfApp
                         allClients.Distinct();
 
                         var clientConnect = new ClientConnect("clients-list", allClients);
+                        clientConnect.elNo = elNo;
                         handler.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(clientConnect)));
                         addLogComment("Wyslalem clients-list do " + handler.RemoteEndPoint.ToString());
                         //zdjąć timeout
@@ -643,7 +709,7 @@ namespace ServerSocketWpfApp
                     {
                         addLogComment("Otrzymałem clients-list od " + handler.RemoteEndPoint.ToString());
                         ClientConnect deserializedClient = JsonConvert.DeserializeObject<ClientConnect>(resultNode);
-                        clientList = deserializedClient.list;
+                        clientList = deserializedClient.clients;
                         //pod przyciskiem
                         //zdjąć timeout
                         resultNode = null;
@@ -653,16 +719,29 @@ namespace ServerSocketWpfApp
                     {
                         addLogComment("Otrzymałem message od " + handler.RemoteEndPoint.ToString());
                         Message deserializedMessage = JsonConvert.DeserializeObject<Message>(resultNode);
+                        deserializedMessage.elNo = elNo;
                         var client = clientsConnected.Where(i => i.id == deserializedMessage.clientTo.id).Select(i => i.socket).FirstOrDefault();
-                        string msgAck = JsonConvert.SerializeObject(new Message("message-ack", deserializedMessage.clientFrom, deserializedMessage.clientTo, null, Helpers.GetTimestamp(DateTime.Now)));
-                        string msgFailure = JsonConvert.SerializeObject(new Message("message-fail", deserializedMessage.clientFrom, deserializedMessage.clientTo, null, Helpers.GetTimestamp(DateTime.Now)));
+                        var clientID = clientsConnected.Where(i => i.id == deserializedMessage.clientTo.id).Select(i => i.id).FirstOrDefault();
+                        string msgAck = JsonConvert.SerializeObject(new Message("message-ack", deserializedMessage.clientTo,deserializedMessage.clientFrom, null, Helpers.GetTimestamp(DateTime.Now)));
+                        string msgFailure = JsonConvert.SerializeObject(new Message("message-fail", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetTimestamp(DateTime.Now)));
 
                         if (client != null)
                         {
-                            client.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(deserializedMessage)));
-                            addLogComment("Wyslalem message do " + client.RemoteEndPoint.ToString());
-                            handler.Send(Encoding.ASCII.GetBytes(msgAck));
-                            addLogComment("Wyslalem message-ack do " + handler.RemoteEndPoint.ToString());
+                            if (client.Connected)
+                            {
+                                client.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(deserializedMessage)));
+                                addLogComment("Wyslalem message do " + client.RemoteEndPoint.ToString());
+                            }
+                            else
+                            {
+                                MessageBox.Show("Klient odłączony !");
+                                clientList.RemoveAll(i => i.id == clientID);
+                            }
+                            if (handler.Connected)
+                            {
+                                handler.Send(Encoding.ASCII.GetBytes(msgAck));
+                                addLogComment("Wyslalem message-ack do " + handler.RemoteEndPoint.ToString());
+                            }
                         }
                         else
                         {
@@ -701,12 +780,15 @@ namespace ServerSocketWpfApp
                     {
                         addLogComment("Klient : Odebrany connect od " + handler.RemoteEndPoint.ToString());
                         ClientConnect deserializedClient = JsonConvert.DeserializeObject<ClientConnect>(result);
-                        foreach (var item in deserializedClient.list)
+                        //
+                        if (deserializedClient.clients != null)
                         {
-                            clientList.Add(item);
-                            clientsConnected.Add(new ClientWorker(item.id, handler));
+                            foreach (var item in deserializedClient.clients)
+                            {
+                                clientList.Add(item);
+                                clientsConnected.Add(new ClientWorker(item.id, handler));
+                            }
                         }
-
                         clientConnect = new ClientConnect("clients-list", clientList);
 
                         sendText = JsonConvert.SerializeObject(clientConnect);
@@ -749,15 +831,30 @@ namespace ServerSocketWpfApp
                         addLogComment("Klient : odebrany message od " + handler.RemoteEndPoint.ToString());
                         Message deserializedMessage = JsonConvert.DeserializeObject<Message>(result);
                         //deserializedMessage.
-                        string msgAck = JsonConvert.SerializeObject(new Message("message-ack", deserializedMessage.clientFrom, deserializedMessage.clientTo, null, Helpers.GetTimestamp(DateTime.Now)));
-                        string msgFailure = JsonConvert.SerializeObject(new Message("message-fail", deserializedMessage.clientFrom, deserializedMessage.clientTo, null, Helpers.GetTimestamp(DateTime.Now)));
+                        string msgAck = JsonConvert.SerializeObject(new Message("message-ack", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetTimestamp(DateTime.Now)));
+                        string msgFailure = JsonConvert.SerializeObject(new Message("message-fail", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetTimestamp(DateTime.Now)));
                         var client = clientsConnected.Where(i => i.id == deserializedMessage.clientTo.id).Select(i => i.socket).FirstOrDefault();
+                        var clientID = clientsConnected.Where(i => i.id == deserializedMessage.clientTo.id).Select(i => i.id).FirstOrDefault();
                         if (client != null)
                         {
-                            client.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(deserializedMessage)));
-                            addLogComment("Klient : wyslany message do " + client.RemoteEndPoint.ToString());
-                            handler.Send(Encoding.ASCII.GetBytes(msgAck));
-                            addLogComment("Klient : wyslany msgAck do " + handler.RemoteEndPoint.ToString());
+                            if (client.Connected)
+                            {
+
+                                client.Send(Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(deserializedMessage)));
+                                addLogComment("Klient : wyslany message do " + client.RemoteEndPoint.ToString());
+                            }
+
+                            else
+                            {
+                                MessageBox.Show("Klient odłączony !");
+                                clientList.RemoveAll(i => i.id == clientID);
+                            }
+                            if (client.Connected)
+                            {
+                                handler.Send(Encoding.ASCII.GetBytes(msgAck));
+                                addLogComment("Klient : wyslany msgAck do " + handler.RemoteEndPoint.ToString());
+                            }
+
                         }
                         else
                         {
@@ -809,7 +906,7 @@ namespace ServerSocketWpfApp
                     tbMsgReceived.Clear();
 
                 });
-                
+
             }
             catch (Exception exc) { MessageBox.Show(exc.ToString()); }
         }
@@ -833,8 +930,8 @@ namespace ServerSocketWpfApp
         {
             try
             {
-                
-                foreach (var item in nodesConnected.Select(i=>i.socket))
+
+                foreach (var item in nodesConnected.Select(i => i.socket))
                 {
                     item.Close();
                 }

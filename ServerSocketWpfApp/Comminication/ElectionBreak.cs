@@ -10,12 +10,12 @@ namespace ServerSocketWpfApp
     {
         public string type { get; set; }
         public int elNo { get; set; }
-        public string ipSerwer { get; set; }
+        public string server { get; set; }
         public ElectionBreak(string _type, int _elNo, string _ipSerwer)
         {
             type = _type;
             elNo = _elNo;
-            ipSerwer = _ipSerwer;
+            server = _ipSerwer;
         }
     }
 }

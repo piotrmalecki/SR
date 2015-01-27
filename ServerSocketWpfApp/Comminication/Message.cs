@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,10 @@ namespace WpfApplication1.Comminication
     public class Message
     {
         public string type { get; set; }
+
+        [JsonProperty("client-from")]
         public Client clientFrom { get; set; }
+        [JsonProperty("client-to")]
         public Client clientTo { get; set; }
         public string message { get; set; }
         public string timestamp { get; set; }

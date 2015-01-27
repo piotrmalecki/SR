@@ -11,14 +11,14 @@ namespace WpfApplication1.Comminication
     {
         public String type { get; set; }
 
-        public List<Client> list = new List<Client>();
+        public List<Client> clients = new List<Client>();
 
         public int elNo { get; set; }
         
         public ClientConnect(String _type, List<Client> _list)
         {
             type = _type;
-            list = _list;
+            clients = _list;
         }
     }
     public class Client

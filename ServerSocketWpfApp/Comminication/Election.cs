@@ -10,6 +10,7 @@ namespace ServerSocketWpfApp.Comminication
     {
         public String type { get; set; }
         public List<Member> members = new List<Member>();
+        public int elNo { get; set; }
         public Election(String _type, List<Member> _list)
         {
             type = _type;

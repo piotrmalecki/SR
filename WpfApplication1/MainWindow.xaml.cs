@@ -157,6 +157,17 @@ namespace WpfApplication1
                 Console.WriteLine(e.ToString());
             }
         }
+
+
+        private void addLogComment(string Comment)
+        {
+            this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
+            {
+                
+                tbReceivedMsg.Text += Comment + "\r\n";
+
+            });
+        }
         private void Send_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -166,6 +177,7 @@ namespace WpfApplication1
                 message = tbMsg.Text;
                 Message toBeSent = new Message("message", new Client(id, name), sendTo, tbMsg.Text, Helpers.GetTimestamp(DateTime.Now));
                 string connect = JsonConvert.SerializeObject(toBeSent);
+                //addLogComment("LOG: " +connect);
                 Send(m_clientSocket, connect);
             }
             catch (Exception exc) { MessageBox.Show(exc.ToString()); }
@@ -244,7 +256,7 @@ namespace WpfApplication1
                         this.Dispatcher.BeginInvoke(DispatcherPriority.Normal, (ThreadStart)delegate()
                         {
                             ClintsListBox.Items.Clear();
-                            foreach (var item in deserializedClient.list)
+                            foreach (var item in deserializedClient.clients)
                             {
                                 if (item.id != id)
                                 ClintsListBox.Items.Add(item.name + "  " + item.id);
