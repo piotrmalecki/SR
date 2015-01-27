@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using ServerSocketWpfApp.Comminication;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -52,8 +53,8 @@ namespace WpfApplication1.Comminication
             {
                 writer.Formatting = Formatting.Indented;
                 writer.WriteStartObject();
-                writer.WritePropertyName("type");
-                writer.WriteValue("get-clients");
+                writer.WritePropertyName(type);
+                writer.WriteValue(value);
                 writer.WriteEndObject();
             }
             return sb;
@@ -76,6 +77,19 @@ namespace WpfApplication1.Comminication
                 return ipEndPointList.Where(i => Convert.ToInt32(i.Address.ToString().Split('.')[3]) > Convert.ToInt32(startIP.ToString().Split('.')[3])).FirstOrDefault();
             }
             
+        }
+        public static string NextSocket(List<Member> members, string startIP)
+        {
+            //rozpatrujemy wszystkie z received false 
+            if (members.Where(i => !i.received).FirstOrDefault() == null) return null; 
+            if (members.Where(i => !i.received).Select(i => Convert.ToInt32(i.ip.ToString().Split('.')[3])).Max() <= Convert.ToInt32(startIP.Split('.')[3]))
+            {
+                return members.Where(i => !i.received).Select(i=>i.ip).FirstOrDefault();
+            }
+            else
+            {
+                return members.Where(i => Convert.ToInt32(i.ip.Split('.')[3]) > Convert.ToInt32(startIP.ToString().Split('.')[3])).Select(i=>i.ip).FirstOrDefault();
+            }
         }
     }
 }

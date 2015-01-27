@@ -3,13 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Server Socket" Height="553" Width="366" Icon="icon (2).ico">
     <Grid Background="#FFD7CBFD">
-        <TextBox Name="tbMsgReceived" IsEnabled="False" HorizontalAlignment="Left" Height="285" Margin="60,122,0,0" TextWrapping="Wrap" Text=""  VerticalAlignment="Top" Width="222" BorderThickness="3"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="219*"/>
+            <RowDefinition Height="304*"/>
+        </Grid.RowDefinitions>
+        <TextBox Name="tbMsgReceived" IsEnabled="True" HorizontalAlignment="Left" Height="302" Margin="60,122,0,0" TextWrapping="Wrap" Text=""  VerticalAlignment="Top" Width="260" BorderThickness="3" Grid.RowSpan="2" VerticalScrollBarVisibility="Auto"  />
         <Button x:Name="Start_Button" Content="Start server" HorizontalAlignment="Left" Margin="60,23,0,0" VerticalAlignment="Top" Width="120" Click="Start_Click" Background="Black" Foreground="White"/>
-        <TextBlock x:Name="tbStatus" HorizontalAlignment="Left" Margin="185,37,0,0" TextWrapping="Wrap" Text="Not connected yet !" VerticalAlignment="Top" Width="163" Height="55"/>
-        <Button Name="Send_Button" Content="Clear" HorizontalAlignment="Left" Margin="60,429,0,0" VerticalAlignment="Top" Width="120" Click="Send_Click" Background="Black" Foreground="White"/>
-        <Button Name="Close_Button" Content="Close connection" HorizontalAlignment="Left" Margin="60,475,0,0" VerticalAlignment="Top" Width="120" Click="Close_Click" Background="Black" Foreground="White"/>
+        <TextBlock x:Name="tbStatus" HorizontalAlignment="Left" Margin="185,23,0,0" TextWrapping="Wrap" Text="Not connected yet !" VerticalAlignment="Top" Width="163" Height="41"/>
+        <Button Name="Clear_Button" Content="Clear" HorizontalAlignment="Left" Margin="60,210,0,0" VerticalAlignment="Top" Width="120" Click="Clear_Click" Background="Black" Foreground="White" Grid.Row="1"/>
+        <Button Name="Close_Button" Content="Close connection" HorizontalAlignment="Left" Margin="60,256,0,0" VerticalAlignment="Top" Width="120" Click="Close_Click" Background="Black" Foreground="White" Grid.Row="1"/>
         <TextBlock HorizontalAlignment="Left" Margin="60,101,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="176" Height="16"><Run Text="Log"/><LineBreak/><Run/></TextBlock>
         <Button Name="Connected_Button" Content="Connect" HorizontalAlignment="Left" Margin="60,71,0,0" Click="Connect_Click" Background="Black" Foreground="White" VerticalAlignment="Top" Width="120" Height="21"/>
+        <Button x:Name="Update_Button" Content="Update Clients List" HorizontalAlignment="Left" Margin="200,71,0,0" Click="Update_Click" Background="Black" Foreground="White" VerticalAlignment="Top" Width="120" Height="21"/>
 
     </Grid>
 </Window>
