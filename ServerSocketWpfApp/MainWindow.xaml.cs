@@ -758,10 +758,10 @@ namespace ServerSocketWpfApp
                         deserializedMessage.elNo = elNo;
                         var client = clientsConnected.Where(i => i.id == deserializedMessage.clientTo.id).Select(i => i.socket).FirstOrDefault();
                         var clientID = clientsConnected.Where(i => i.id == deserializedMessage.clientTo.id).Select(i => i.id).FirstOrDefault();
-                        var msgACK = new Message("message-ack", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetTimestamp(DateTime.Now));
+                        var msgACK = new Message("message-ack", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetCurrentUnixTimestampMillis().ToString());
                         msgACK.elNo = elNo;
                         string msgAck = JsonConvert.SerializeObject(msgACK);
-                        var msgFail = new Message("message-fail", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetTimestamp(DateTime.Now));
+                        var msgFail = new Message("message-fail", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetCurrentUnixTimestampMillis().ToString());
                         msgFail.elNo = elNo;
                         string msgFailure = JsonConvert.SerializeObject(msgFail);
 
@@ -879,10 +879,10 @@ namespace ServerSocketWpfApp
                         addLogComment("Klient : odebrany message od " + handler.RemoteEndPoint.ToString());
                         Message deserializedMessage = JsonConvert.DeserializeObject<Message>(result);
                         //deserializedMessage.
-                        var messageACK = new Message("message-ack", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetTimestamp(DateTime.Now));
+                        var messageACK = new Message("message-ack", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetCurrentUnixTimestampMillis().ToString());
                         messageACK.elNo = elNo;
                         string msgAck = JsonConvert.SerializeObject(messageACK);
-                        var messageFailed = new Message("message-fail", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetTimestamp(DateTime.Now));
+                        var messageFailed = new Message("message-fail", deserializedMessage.clientTo, deserializedMessage.clientFrom, null, Helpers.GetCurrentUnixTimestampMillis().ToString());
                         messageFailed.elNo = elNo;
                         string msgFailure = JsonConvert.SerializeObject(messageFailed);
                         var client = clientsConnected.Where(i => i.id == deserializedMessage.clientTo.id).Select(i => i.socket).FirstOrDefault();

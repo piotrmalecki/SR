@@ -15,6 +15,13 @@ namespace WpfApplication1.Comminication
         {
             return value.ToString("yyyyMMddHHmmssffff");
         }
+        private static readonly DateTime UnixEpoch =
+           new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        public static long GetCurrentUnixTimestampMillis()
+        {
+            return (long)(DateTime.UtcNow - UnixEpoch).TotalMilliseconds;
+        }
         public static string getMyIPAddress()
         {
             IPHostEntry host;

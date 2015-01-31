@@ -175,7 +175,7 @@ namespace WpfApplication1
                 // Sending message 
                 //<Client Quit> is the sign for end of data 
                 message = tbMsg.Text;
-                Message toBeSent = new Message("message", new Client(id, name, Helpers.getMyIPAddress()), sendTo, tbMsg.Text, Helpers.GetTimestamp(DateTime.Now));
+                Message toBeSent = new Message("message", new Client(id, name, Helpers.getMyIPAddress()), sendTo, tbMsg.Text, Helpers.GetCurrentUnixTimestampMillis().ToString());
                 string connect = JsonConvert.SerializeObject(toBeSent);
                 //addLogComment("LOG: " +connect);
                 Send(m_clientSocket, connect);
