@@ -48,7 +48,7 @@ namespace WpfApplication1
             try
             {
 
-                Client client = new Client(id, name);
+                Client client = new Client(id, name, Helpers.getMyIPAddress());
                 ClientConnect clientConnect = new ClientConnect("connect", new List<Client>() { client });
                 m_clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
@@ -175,7 +175,7 @@ namespace WpfApplication1
                 // Sending message 
                 //<Client Quit> is the sign for end of data 
                 message = tbMsg.Text;
-                Message toBeSent = new Message("message", new Client(id, name), sendTo, tbMsg.Text, Helpers.GetTimestamp(DateTime.Now));
+                Message toBeSent = new Message("message", new Client(id, name, Helpers.getMyIPAddress()), sendTo, tbMsg.Text, Helpers.GetTimestamp(DateTime.Now));
                 string connect = JsonConvert.SerializeObject(toBeSent);
                 //addLogComment("LOG: " +connect);
                 Send(m_clientSocket, connect);
@@ -221,7 +221,7 @@ namespace WpfApplication1
             if (ClintsListBox.SelectedItem != null)
             {
                 String[] selected = ClintsListBox.SelectedItem.ToString().Split(' ');
-                sendTo = new Client(selected[2], selected[0]);
+                sendTo = new Client(selected[2], selected[0], Helpers.getMyIPAddress());
             }
         }
 

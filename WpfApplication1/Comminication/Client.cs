@@ -23,10 +23,19 @@ namespace WpfApplication1.Comminication
         public String id { get; set; }
 
         public String name { get; set; }
-        public Client(String _id, String _name)
+
+        public String node { get; set; }
+        //public Client(String _id, String _name)
+        //{
+        //    id = _id;
+        //    name = _name;
+        //}
+        public Client(String _id, String _name, String _node)
         {
             id = _id;
             name = _name;
+            node = _node;
         }
     }
+
 }

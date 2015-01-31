@@ -18,6 +18,8 @@ namespace Test
             Console.WriteLine(s[3]);
             Console.Read();
 
+
+            //var result = MoreLinq.MoreEnumerable.DistinctBy(allClients, x => x.id, null);
         }
     }
 }

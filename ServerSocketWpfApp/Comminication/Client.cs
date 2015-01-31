@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -28,10 +29,17 @@ namespace WpfApplication1.Comminication
         public string node { get; set; }
         public String name { get; set; }
 
-        public Client(String _id, String _name)
+        //public Client(String _id, String _name)
+        //{
+        //    id = _id;
+        //    name = _name;
+        //}
+       //[JsonConstructor]
+        public Client(String _id, String _name, String _node)
         {
             id = _id;
             name = _name;
+            node = _node;
         }
     }
 }

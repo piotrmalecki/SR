@@ -56,3 +56,9 @@ D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.g.resources
 D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.Properties.Resources.resources
 D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.IPadressess.resources
 D:\Additional\SR2\ServerSocketWpfApp\obj\Debug\ServerSocketWpfApp.csproj.GenerateResource.Cache
+D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\bin\Debug\FluentValidationNA.dll
+D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\bin\Debug\MoreLinq.dll
+D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\bin\Debug\System.Linq.Dynamic.dll
+D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\bin\Debug\FluentValidationNA.xml
+D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\bin\Debug\MoreLinq.xml
+D:\Studia\SR\SRProject\C#\ServerSocketWpfApp\bin\Debug\System.Linq.Dynamic.xml
